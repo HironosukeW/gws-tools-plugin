@@ -3,18 +3,18 @@
   "owner": {
     "name": "hironosuke"
   },
-  "description": "Google スプレッドシートを Claude Code から読み書きするためのプラグイン群",
+  "description": "Google Workspace を Claude Code から扱うためのプラグイン群",
   "plugins": [
     {
-      "name": "gws-sheets",
-      "source": "./plugins/gws-sheets",
-      "description": "Google スプレッドシートの読み取りと書き込みを gws CLI 経由で行う。Windows ネイティブ環境向け。",
-      "version": "1.0.0",
+      "name": "gws-tools",
+      "source": "./plugins/gws-tools",
+      "description": "Google スプレッドシートの読み書きと Apps Script の配置を、Claude Code から行う。Windows ネイティブ環境向け。",
+      "version": "2.0.0",
       "author": {
         "name": "hironosuke"
       },
       "category": "productivity",
-      "tags": ["google-sheets", "spreadsheet", "gws", "windows"]
+      "tags": ["google-sheets", "google-workspace", "apps-script", "clasp", "gws", "windows"]
     }
   ]
 }

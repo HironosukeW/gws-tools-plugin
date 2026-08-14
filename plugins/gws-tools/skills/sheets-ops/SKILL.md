@@ -5,7 +5,7 @@ description: Google スプレッドシートを読み書きする。セルの値
 
 # Google スプレッドシートの読み書き
 
-`gws`（Google Workspace CLI）で Sheets API を直接呼んで操作する。`gws` はこのプラグインに同梱されており、PATH に自動で追加されるので、インストールも認証情報のファイル配置も不要である。
+`gws`（Google Workspace CLI）で Sheets API を直接呼んで操作する。`gws` の導入と認証が済んでいることが前提である。`gws auth status` が認証済みを示さない場合は、自分で認証を回そうとせず `gws-setup` スキルの手順へ誘導する。
 
 ## 作業を始める前に必ずやること
 
@@ -29,6 +29,8 @@ gws sheets spreadsheets values get --params '{"spreadsheetId":"${user_config.reg
 対象表に載っていないスプレッドシートは操作しない。ユーザーが対象表にない ID を指定してきたら、対象表に見当たらないことを伝え、管理者に追加してもらうよう案内する。
 
 対象表そのものが読めない場合（認証エラー・404）は、`gws-setup` スキルの手順へ誘導する。自分で認証を回そうとしない。
+
+**対象表のスプレッドシート ID がプラグイン設定に入っていない場合は、書き込みを一切行わない。** 読み取りだけを行い、書き込みを頼まれたら「対象表が未設定なので書き込めない」と伝えて、`/plugin` から設定するよう案内する。対象表がなければ、どのシートが書き込み可なのかを判断する根拠がないためである。
 
 ## 読む
 
@@ -100,8 +102,18 @@ gws sheets spreadsheets batchUpdate --params '{"spreadsheetId":"<ID>"}' --json '
 
 ## Windows でのコマンドの書き方
 
-Git Bash が入っていれば、上の例をそのまま実行できる。PowerShell しかない環境では、JSON 内の二重引用符が壊れることがある。その場合は停止解析トークンを使い、JSON から空白を除いて渡す。
+このプラグインは Windows ネイティブ環境（WSL なし）を主対象としている。上の例は PowerShell でそのまま実行できる。`--params` に渡す JSON は単一引用符でくくること。二重引用符でくくると、中の二重引用符が PowerShell に食われる。
+
+複数のコマンドを1行につなげない。**PowerShell 5.1 は `&&` と `||` を解釈できない**ので、1行に1コマンドずつ実行する。
+
+JSON が長くなるときは、いったん変数に入れてから渡すと崩れにくい。
 
 ```powershell
-gws --% sheets spreadsheets values get --params {"spreadsheetId":"<ID>","range":"台帳!A1:E10"}
+$body = '{"values":[["A-00123","AU","山田太郎"]]}'
 ```
+
+```powershell
+gws sheets spreadsheets values append --params '{"spreadsheetId":"<ID>","range":"台帳!A:C","valueInputOption":"RAW","insertDataOption":"INSERT_ROWS"}' --json $body
+```
+
+Git Bash が入っている環境なら、上の例をそのまま bash でも実行できる。

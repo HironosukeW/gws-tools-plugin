@@ -1,7 +1,14 @@
-# 秘密や会社固有の情報は公開リポジトリに入れない（Drive 経由で配布する）
+# 秘密や会社固有の情報は公開リポジトリに入れない（管理者が別経路で配布する）
 client_secret.json
+client_secret*.json
 credentials.json
 credentials.enc
 token_cache.json
+.clasprc.json
+.clasp.json
 gws-targets.json
 .gws-targets.json
+
+# 検証で入れた CLI 本体が紛れ込まないように
+bin/
+node_modules/

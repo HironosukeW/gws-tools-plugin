@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "gws-tools",
+  "displayName": "Google Workspace 操作（スプレッドシート・Apps Script）",
+  "version": "2.0.0",
+  "description": "Google スプレッドシートの読み書きを gws CLI で、Apps Script の配置を clasp で行う。Windows ネイティブ環境向け（WSL 不要）。",
+  "author": {
+    "name": "hironosuke"
+  },
+  "license": "MIT",
+  "keywords": ["google-sheets", "spreadsheet", "google-workspace", "apps-script", "clasp", "gws", "windows"],
+  "userConfig": {
+    "registry_spreadsheet_id": {
+      "type": "string",
+      "title": "対象表のスプレッドシート ID",
+      "description": "操作してよいスプレッドシートの一覧が書かれたシートの ID です。会社の管理者から渡された値を貼り付けます。空のままにすると、スプレッドシートへの書き込みはすべて拒否されます（読み取りのみ）。",
+      "required": false
+    }
+  }
+}

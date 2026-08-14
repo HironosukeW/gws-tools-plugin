@@ -1,80 +1,93 @@
-# gws-sheets プラグイン
+# gws-tools プラグイン
 
-Claude Code から Google スプレッドシートを読み書きするためのプラグインである。Windows ネイティブ環境（WSL なし）を主対象とし、必要な CLI（`gws`）を同梱しているのでインストール作業がいらない。
+Claude Code から Google スプレッドシートを読み書きし、Apps Script を配置するためのプラグインである。Windows ネイティブ環境（WSL なし）を主対象とする。
 
-利用者がやることは**2つだけ**である。ファイルのダウンロードも配置も要らない。
+会社で **OAuth クライアントを1つだけ**作り、それを全員で共有する設計になっている。管理者の作業は一度きりで、利用者が増えても追加の作業はいらない。
 
-## 利用者の導入手順
+## 全体像
+
+| 誰が | 何を | 頻度 |
+|---|---|---|
+| 管理者 | Cloud プロジェクトと OAuth クライアントを作り、`client_secret.json` と対象表シートを配る | 一度だけ |
+| 利用者 | プラグインを入れ、CLI を入れ、自分のアカウントで承認する | ひとりにつき一度 |
+
+## 管理者の準備
+
+詳しい手順は [docs/admin-setup.md](docs/admin-setup.md) にある。Claude に「管理者側の準備をしたい」と言えば、`gws-admin-setup` スキルが同じ内容を対話で案内する。
+
+要点は次の4つである。
+
+1. 会社の**組織の下に** Cloud プロジェクトを作る（組織なしで作ると、次の「内部」が選べない）
+2. Drive / Sheets / Docs / Apps Script / Service Usage の各 API を有効にする
+3. 同意画面の対象を **内部（Internal）** にする
+4. **デスクトップアプリ**の OAuth クライアントを作り、JSON を `client_secret.json` として利用者へ配る
+
+**「内部」にすることが最も重要である。** 外部かつ「テスト中」のままだと、リフレッシュトークンが7日で失効して利用者が毎週ログインし直すことになり、テストユーザーは 100 人まで、承認画面には「確認されていないアプリ」の警告が出る。内部ならこれらがすべてなくなり、Google の審査も不要である。
+
+## 利用者の導入
 
 ### 1. プラグインを入れる
 
-Claude Code を起動して、次の2つを実行する。
+Claude Code で次を実行する。
 
 ```
-/plugin marketplace add https://github.com/<オーナー>/gws-sheets-plugin.git
+/plugin marketplace add https://github.com/HironosukeW/gws-tools-plugin.git
 ```
 
 ```
-/plugin install gws-sheets@gws-tools
+/plugin install gws-tools@gws-tools
 ```
 
-インストール時に設定画面が開くので、管理者から渡された3つの値を貼り付ける。
+**マーケットプレイスの指定は、`オーナー名/リポジトリ名` の短縮形ではなく `https://` で始まるフル URL を使う。** 短縮形は SSH 接続を試みるため、SSH 鍵を設定していないパソコンでは失敗する。
 
-| 設定項目 | 何を入れるか |
+インストール時に設定画面が開くので、管理者から渡された**対象表のスプレッドシート ID** を貼り付ける。
+
+### 2. セットアップする
+
+Claude に「セットアップして」と伝える。`gws-setup` スキルが、CLI の導入から承認までを案内する。Apps Script も使うなら「clasp のセットアップもして」と続ける。
+
+やることは3つだけである。
+
+```powershell
+npm install -g @googleworkspace/cli
+```
+
+管理者から受け取った `client_secret.json` を `C:\Users\<ユーザー名>\.config\gws\` に置く。
+
+```powershell
+gws auth login -s drive,sheets,docs
+```
+
+ブラウザが開くので、**会社の Google アカウント**で承認する。
+
+以降は「台帳のA列を見せて」「この行を追記して」のように日本語で頼めば動く。
+
+## 中身
+
+| スキル | 役割 |
 |---|---|
-| OAuth クライアント ID | 末尾が `.apps.googleusercontent.com` の文字列 |
-| OAuth クライアントシークレット | 伏せ字で入力される。安全な保管領域に保存される |
-| 対象表のスプレッドシート ID | 操作してよいシートの一覧が書かれたシートの ID |
+| `gws-admin-setup` | 管理者の準備（一度だけ） |
+| `gws-setup` | gws の導入と認証 |
+| `sheets-ops` | スプレッドシートの読み書き |
+| `clasp-setup` | clasp の導入と認証 |
+| `clasp-deploy` | Apps Script の反映とデプロイ |
+| `windows-troubleshooting` | Windows 固有の詰まりどころ |
 
-**マーケットプレイスの URL は `オーナー名/リポジトリ名` の短縮形ではなく、上のように `https://` で始まるフル URL を使う。** 短縮形は SSH 接続を試みるため、SSH 鍵を設定していないパソコンでは失敗する。
+`plugins/gws-tools/config/registry-sheet-format.md` に、対象表シートの作り方がある。
 
-### 2. 自分の Google アカウントで承認する
+## 事故を防ぐ仕組み
 
-Claude に「セットアップして」と伝えると `gws-setup` スキルが案内する。ブラウザが開くので、**普段スプレッドシートを開いている会社のアカウント**で承認する。
+書き込んでよいスプレッドシートは、**対象表シート**（Google スプレッドシート1枚）で管理する。C 列が「はい」のものだけが書き込み対象で、それ以外は読み取り専用として扱う。対象表を直せば全員に反映されるので、プラグインを配り直す必要はない。
 
-これで完了である。以降は「台帳のA列を見せて」「この行を追記して」のように日本語で頼めば動く。
+ただし、**対象表はスキルへの指示にすぎず、仕組みとしての防波堤ではない。** 読ませるだけの相手には、そのスプレッドシート自体の Drive 共有権限を閲覧者にすること。権限で止まっていれば、何が起きても書き込みは失敗する。
 
-## 配布側（管理者）の準備
+対象表のスプレッドシート ID が未設定の場合、スキルは書き込みを一切行わない（読み取りのみになる）。
 
-### 1. OAuth クライアントを作る
+## 公開リポジトリとして運用する
 
-会社の Google Workspace の GCP プロジェクトで、OAuth クライアントを1つ作る。
+このリポジトリは**公開**で運用する。利用者のパソコンで Git の認証設定が不要になり、プラグインの自動更新も安定するためである。
 
-- 種類: **デスクトップアプリ**
-- ユーザーの種類: **内部（Internal）**
-- スコープ: `https://www.googleapis.com/auth/spreadsheets` と `https://www.googleapis.com/auth/drive` のみ
-
-「内部」にすることが重要である。外部ユーザー種別かつ「テスト中」のままだと、リフレッシュトークンが7日で失効し、利用者が毎週ログインし直すことになる。内部アプリならこの制限がなく、テストユーザーの登録も Google の審査も不要である。
-
-作成後に表示されるクライアント ID とクライアントシークレットを控える。**このリポジトリには置かない。** 利用者へは、プラグイン設定に貼り付けてもらう値として渡す。
-
-### 2. 対象表シートを作る
-
-操作してよいスプレッドシートの一覧を、Google スプレッドシート1枚で管理する。作り方は `plugins/gws-sheets/config/registry-sheet-format.md` を参照する。
-
-このシートを直せば全員に反映されるので、対象の追加や書き込み可否の変更でプラグインを配り直す必要はない。利用者には**閲覧者**として共有する。
-
-書き込ませたくないシートは、対象表で「いいえ」にするだけでなく、**そのシート自体の Drive 共有権限も閲覧者にする**こと。対象表の記述はスキルへの指示にすぎないが、Drive の権限は仕組みとして書き込みを止める。事故を防ぐのは後者である。
-
-### 3. バイナリを入れる
-
-`plugins/gws-sheets/bin/` に `gws-bin.exe` を配置する。手順は同ディレクトリの README を参照する。
-
-### 4. 公開する
-
-このリポジトリは**公開リポジトリ**として運用する。利用者のパソコンで Git の認証設定が不要になり、プラグインの自動更新も安定するためである。秘密（クライアントシークレット）も会社固有の情報（対象シートの一覧）もリポジトリに入らない設計なので、公開して差し支えない。
-
-### 5. 動作確認
-
-公開前に、手元で読み込んで確かめる。
-
-```bash
-claude --plugin-dir ./plugins/gws-sheets
-```
-
-```bash
-claude plugin validate ./plugins/gws-sheets
-```
+秘密（クライアントシークレット）も会社固有の情報（対象シートの一覧）もリポジトリに入らない設計になっている。`client_secret.json` は管理者が社内の経路で配り、対象表は Google スプレッドシートに置く。
 
 ## 更新の配り方
 
@@ -86,21 +99,18 @@ claude plugin validate ./plugins/gws-sheets
 
 対象シートの追加・変更は対象表シートを直すだけでよく、リポジトリの更新は要らない。
 
-## 中身
+## 開発時の動作確認
 
-| パス | 役割 |
-|---|---|
-| `plugins/gws-sheets/skills/sheets-ops/` | 読み書きの手順と事故防止の作法 |
-| `plugins/gws-sheets/skills/gws-setup/` | 初回セットアップの案内 |
-| `plugins/gws-sheets/bin/` | `gws` ラッパーと同梱バイナリ（PATH に自動追加される） |
-| `plugins/gws-sheets/config/` | 対象表シートの作り方 |
+```bash
+claude plugin validate ./plugins/gws-tools
+```
 
-## 仕組み
+```bash
+claude --plugin-dir ./plugins/gws-tools
+```
 
-プラグイン設定に入力された値は、`CLAUDE_PLUGIN_OPTION_*` という環境変数として各コンポーネントに渡る。`bin/gws` ラッパーがこれを `gws` の読む `GOOGLE_WORKSPACE_CLI_*` へ移し替えてから本体を呼ぶため、利用者が `client_secret.json` を配置する必要がない。
+## 前提と断り
 
-渡っているかどうかは `gws auth status` の `credential_source` で判別できる。`environment_variables` なら成功、`none` なら設定が未入力である。
-
-## 前提
-
-利用者それぞれに、Claude Code を実行できる Claude のプラン契約が必要である。
+- 利用者それぞれに、Claude Code を実行できる Claude のプラン契約が必要である
+- Node.js（LTS 版）が必要である
+- `gws`（Google Workspace CLI）は Google が公開しているツールだが、正式サポート製品ではない旨を自ら表示する。このプラグインは gws を同梱せず、npm から導入する
