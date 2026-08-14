@@ -1,0 +1,20 @@
+{
+  "name": "gws-tools",
+  "owner": {
+    "name": "hironosuke"
+  },
+  "description": "Google スプレッドシートを Claude Code から読み書きするためのプラグイン群",
+  "plugins": [
+    {
+      "name": "gws-sheets",
+      "source": "./plugins/gws-sheets",
+      "description": "Google スプレッドシートの読み取りと書き込みを gws CLI 経由で行う。Windows ネイティブ環境向け。",
+      "version": "1.0.0",
+      "author": {
+        "name": "hironosuke"
+      },
+      "category": "productivity",
+      "tags": ["google-sheets", "spreadsheet", "gws", "windows"]
+    }
+  ]
+}

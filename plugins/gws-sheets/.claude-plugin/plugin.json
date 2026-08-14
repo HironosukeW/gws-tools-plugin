@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "gws-sheets",
+  "displayName": "Google スプレッドシート操作",
+  "version": "1.0.0",
+  "description": "Google スプレッドシートの読み取りと書き込みを gws CLI 経由で行う。Windows ネイティブ環境向け（WSL 不要）。",
+  "author": {
+    "name": "hironosuke"
+  },
+  "license": "MIT",
+  "keywords": ["google-sheets", "spreadsheet", "gws", "google-workspace", "windows"]
+}
