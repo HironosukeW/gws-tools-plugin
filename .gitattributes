@@ -1,0 +1,8 @@
+# Windows のバッチファイルは CRLF でないと環境によって解釈が壊れる
+*.cmd text eol=crlf
+
+# シェルスクリプトのラッパーは常に LF
+plugins/gws-sheets/bin/gws text eol=lf
+
+# 同梱バイナリ
+*.exe binary
