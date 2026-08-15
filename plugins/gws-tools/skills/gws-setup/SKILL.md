@@ -33,19 +33,40 @@ gws auth status
 
 ## ステップ1: gws を入れる
 
-Node.js が必要である。入っていなければ [nodejs.org](https://nodejs.org/) の LTS 版を先に入れる。
+**「見つからない」には2種類ある。まだ入っていない場合と、入っているのにこのセッションから見えていない場合である。** 先にどちらかを見分ける。順に試して、最初に成功したところで止める。
 
-```powershell
-npm install -g @googleworkspace/cli
-```
-
-入ったことを確かめる。
+1. そのまま呼ぶ
 
 ```powershell
 gws --version
 ```
 
-`gws 0.22.5` のようにバージョンが出れば成功である。**コマンドが見つからないと言われた場合**は、npm のグローバル領域が PATH に載っていない。`windows-troubleshooting` スキルの「gws や clasp が見つからない」を見る。
+2. 見つからないと言われたら、実体があるかを確かめる
+
+```powershell
+& "$env:APPDATA\npm\gws.ps1" --version
+```
+
+**ここでバージョンが出たなら、導入は済んでいて PATH が古いだけである。** 入れ直してはいけない。原因は、Claude Code（またはターミナル）を起動したあとに gws を入れたことである。Windows のプロセスは起動時の PATH を持ち続けるため、あとから入れたコマンドが見えない。
+
+- 恒久的な対処: **Claude Code を再起動する**。それだけで直る
+- 再起動せずに進めたい場合: このセッションの間だけ、**すべての `gws` を `& "$env:APPDATA\npm\gws.ps1"` に読み替えて実行する**。以降の手順もすべてこの読み替えで通る
+
+3. 実体も無ければ、入っていない。Node.js が要るので、`node --version` が通らなければ先に [nodejs.org](https://nodejs.org/) の LTS 版を入れてもらう。
+
+Node.js があるなら、入れてよいかをユーザーに一言確認してから実行する。
+
+```powershell
+npm install -g @googleworkspace/cli
+```
+
+入れた直後は、上と同じ理由でこのセッションからは `gws` の名前で呼べないことが多い。確認は実体のパスで行う。
+
+```powershell
+& "$env:APPDATA\npm\gws.ps1" --version
+```
+
+`gws 0.22.5` のようにバージョンが出れば成功である。**このあとの手順も、Claude Code を再起動するまでは実体のパスで呼ぶ。**
 
 なお gws は Google が公開しているツールだが、正式サポート製品ではない旨を自ら表示する（`This is not an officially supported Google product.`）。仕様である。
 
@@ -113,7 +134,7 @@ gws sheets spreadsheets values get --params '{"spreadsheetId":"${user_config.reg
 
 | 症状 | 原因と対処 |
 |---|---|
-| `gws` がコマンドとして見つからない | PATH の問題。`windows-troubleshooting` スキルへ |
+| `gws` がコマンドとして見つからない | まずステップ1の手順2で実体を確かめる。実体があれば入れ直さず、Claude Code を再起動するか実体のパスで呼ぶ |
 | `client_config_exists: false` のまま | 置き場所かファイル名の誤り。`gws auth status` の `client_config` が示すパスと1文字ずつ突き合わせる |
 | ブラウザで「このアプリは確認されていません」 | 会社の内部アプリとして作られていない。管理者に「同意画面の対象が内部になっているか」を確認してもらう |
 | ブラウザで「アクセスをブロック」「admin_policy_enforced」 | 組織のポリシーで弾かれている。管理者に、管理コンソールの API 制御でクライアント ID を信頼済みに登録してもらう |

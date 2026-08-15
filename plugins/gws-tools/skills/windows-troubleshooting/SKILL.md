@@ -9,9 +9,28 @@ description: Windows で gws や clasp が動かないときの原因を切り�
 
 ## gws や clasp が見つからない
 
-npm でグローバルに入れたコマンドは `%APPDATA%\npm` に置かれる。ここが PATH に載っていないと、入れたのに見つからない状態になる。
+**最も多い原因は PATH の設定漏れではなく、起動順である。** Claude Code やターミナルを起動したあとにコマンドを入れると、そのプロセスは起動時の PATH を持ち続けるため、あとから入れたコマンドが見えない。**入れ直しても直らない。**
 
-まず、どこに入っているかを確かめる。
+最初に、入っているかどうかを実体のパスで確かめる。
+
+```powershell
+& "$env:APPDATA\npm\gws.ps1" --version
+```
+
+```powershell
+& "$env:APPDATA\npm\clasp.ps1" --version
+```
+
+**ここでバージョンが出たなら、導入は成功していて、見えていないだけである。**
+
+- 直し方: **Claude Code を再起動する。** ターミナルだけの問題なら、そのターミナルを閉じて開き直す
+- 再起動せずに進めたいなら、そのセッションの間は上の書き方（実体のパス）で呼ぶ
+
+実体も無い場合だけ、本当に入っていない。`npm install -g @googleworkspace/cli` または `npm install -g @google/clasp` で入れる。
+
+## PATH そのものが通っていないとき
+
+上の実体パスでも見つからず、導入もしたはずなのに動かない場合は、置き場所を確かめる。
 
 ```powershell
 npm prefix -g
@@ -35,7 +54,7 @@ $env:Path -split ';' | Select-String 'npm'
 $env:Path = "$env:APPDATA\npm;$env:Path"
 ```
 
-これで動くなら原因は PATH である。恒久的に直すには、Windows の「システム環境変数の編集」→「環境変数」→ ユーザーの `Path` に `%APPDATA%\npm` を追加し、**Claude Code を再起動する**（起動中のプロセスは古い PATH を持ち続ける）。
+これで動くなら原因は PATH である。恒久的に直すには、Windows の「システム環境変数の編集」→「環境変数」→ ユーザーの `Path` に `%APPDATA%\npm` を追加し、**Claude Code を再起動する**。
 
 ## npm ls -g が ENOENT で落ちる
 
@@ -91,6 +110,29 @@ clasp -A "$env:USERPROFILE\.clasprc.json" list-scripts
 
 ```powershell
 $env:clasp_config_auth = "$env:USERPROFILE\.clasprc.json"
+```
+
+## 作業フォルダがネットワークパスのとき（`\\wsl.localhost` など）
+
+Windows から WSL のファイルを直接編集していると、作業フォルダが `\\wsl.localhost\ubuntu\home\...` のようなネットワークパス（UNC パス）になる。**この状態では `.cmd` で終わる実行ファイルが正しく動かない。** CMD.EXE はネットワークパスを作業フォルダにできず、警告を出して Windows フォルダへ移動してしまうため、出力が混ざったり失敗したりする。
+
+```
+CMD.EXE was started with the above path as the current directory.
+UNC paths are not supported.  Defaulting to Windows directory.
+```
+
+npm で入れたコマンドは `.cmd` と `.ps1` の両方が用意されている。**PowerShell では `.ps1` のほうを使う。** こちらは CMD.EXE を通さないので、ネットワークパスでも問題なく動く。
+
+```powershell
+& "$env:APPDATA\npm\gws.ps1" --version
+```
+
+`gws` と名前だけで呼んだ場合、PowerShell は `.ps1` を優先するので通常は問題にならない。**問題になるのは、実体のパスを明示するときに `.cmd` を選んだ場合である。**
+
+それでも動かないときは、実バイナリを直接呼ぶ。
+
+```powershell
+& "$env:APPDATA\npm\node_modules\@googleworkspace\cli\bin\gws.exe" --version
 ```
 
 ## WSL では動くのに Windows で動かない

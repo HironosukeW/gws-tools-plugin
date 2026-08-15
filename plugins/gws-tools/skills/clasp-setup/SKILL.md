@@ -19,15 +19,35 @@ clasp show-authorized-user
 
 ## ステップ1: clasp を入れる
 
-```powershell
-npm install -g @google/clasp
-```
+gws と同じく、**「見つからない」は「入っていない」とは限らない。** 順に試して、最初に成功したところで止める。
+
+1. そのまま呼ぶ
 
 ```powershell
 clasp --version
 ```
 
-`3.3.0` のようにバージョンが出れば成功である。コマンドが見つからない場合は `windows-troubleshooting` スキルの「gws や clasp が見つからない」を見る。
+2. 見つからないと言われたら、実体があるかを確かめる
+
+```powershell
+& "$env:APPDATA\npm\clasp.ps1" --version
+```
+
+バージョンが出たなら導入済みで、PATH が古いだけである。**入れ直さない。** Claude Code を再起動するか、このセッションの間は `clasp` を `& "$env:APPDATA\npm\clasp.ps1"` に読み替えて実行する。
+
+3. 実体も無ければ、入れてよいかをユーザーに確認してから実行する。
+
+```powershell
+npm install -g @google/clasp
+```
+
+入れた直後は名前で呼べないことが多いので、確認は実体のパスで行う。
+
+```powershell
+& "$env:APPDATA\npm\clasp.ps1" --version
+```
+
+`3.3.0` のようにバージョンが出れば成功である。
 
 ## ステップ2: Apps Script API を自分の設定でオンにする
 
@@ -69,7 +89,7 @@ clasp list-scripts
 
 | 症状 | 原因と対処 |
 |---|---|
-| `clasp` がコマンドとして見つからない | PATH の問題。`windows-troubleshooting` スキルへ |
+| `clasp` がコマンドとして見つからない | まずステップ1の手順2で実体を確かめる。実体があれば入れ直さず、Claude Code を再起動するか実体のパスで呼ぶ |
 | `User has not enabled the Apps Script API` | ステップ2をやっていない。ユーザー設定のトグルをオンにする |
 | `Could not read API credentials` | Windows 特有の癖。`clasp -A "$env:USERPROFILE\.clasprc.json" <コマンド>` のように認証ファイルを明示する |
 | ブラウザで「アクセスをブロック」「admin_policy_enforced」 | 組織のポリシー。管理者にクライアント ID の信頼済み登録を依頼する |
