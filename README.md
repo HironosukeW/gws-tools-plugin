@@ -71,6 +71,7 @@ gws auth login -s drive,sheets,docs
 | `sheets-ops` | スプレッドシートの読み書き |
 | `clasp-setup` | clasp の導入と認証 |
 | `clasp-deploy` | Apps Script の反映とデプロイ |
+| `account-switching` | 会社用と個人用のアカウントの使い分け |
 | `windows-troubleshooting` | Windows 固有の詰まりどころ |
 
 `plugins/gws-tools/config/registry-sheet-format.md` に、対象表シートの作り方がある。
